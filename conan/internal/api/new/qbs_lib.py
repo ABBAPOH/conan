@@ -14,10 +14,14 @@ class {{package_name}}Recipe(ConanFile):
 
     exports_sources = "*.cpp", "*.h", "*.qbs"
     settings = "os", "compiler", "arch"
+    options = {"shared": [True, False]}
+    default_options = {"shared": False}
 
     def build(self):
         qbs = Qbs(self)
         qbs.profile = ""
+        qbs_config = {"products.{{name}}.isShared": "true" if self.options.shared else "false"}
+        qbs.add_configuration("default", qbs_config)
         qbs.build()
 
     def package(self):
@@ -30,9 +34,14 @@ class {{package_name}}Recipe(ConanFile):
 '''
 
 qbs_file = '''
-    StaticLibrary {
-        Depends { name: "cpp" }
+    Library {
+        property bool isShared: true
+        name: "{{name}}"
+        type: isShared ? "dynamiclibrary" : "staticlibrary"
         files: [ "{{name}}.h", "{{name}}.cpp" ]
+        Depends { name: "cpp" }
+        Depends { name: "bundle" }
+        bundle.isBundle: false
     }
 '''
 

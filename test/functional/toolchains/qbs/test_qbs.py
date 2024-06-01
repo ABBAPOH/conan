@@ -12,8 +12,12 @@ def gen_file(template, **context):
     return t.render(**context)
 
 
+@pytest.mark.parametrize('shared', [
+    ('False'),
+    ('True'),
+])
 @pytest.mark.tool("qbs")
-def test_qbs_static_lib():
+def test_qbs_lib(shared):
     client = TestClient()
 
     context = {
@@ -29,7 +33,8 @@ def test_qbs_static_lib():
         "hello.qbs": gen_file(qbs_file, **context),
     }, clean_first=True)
 
-    client.run("create .")
+    client.run("create . -o:h &:shared={shared}".format(shared=shared))
+    assert "compiling hello.cpp" in client.out
 
 
 @pytest.mark.tool("qbs")
@@ -37,6 +42,7 @@ def test_api_qbs_create_lib():
     client = TestClient()
     client.run("new qbs_lib -d name=hello -d version=1.0")
     client.run("create .")
+    assert "compiling hello.cpp" in client.out
 
 
 @pytest.mark.tool("qbs")
@@ -78,6 +84,7 @@ def test_qbs_all_products():
 
     client.run("create .")
     assert "--all-products" in client.out
+    assert "compiling hello.cpp" in client.out
 
 
 @pytest.mark.tool("qbs")
@@ -119,3 +126,4 @@ def test_qbs_specific_products():
 
     client.run("create .")
     assert "--products hello,hello" in client.out
+    assert "compiling hello.cpp" in client.out
